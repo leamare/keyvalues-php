@@ -86,3 +86,27 @@ function build_decode($string) {
 
   return $res;
 }
+
+function build_encode($arr, $tabs = 0) {
+  if (!\is_array($arr)) return $arr;
+  $res = "";
+
+  foreach ($arr as $k => $v) {
+    if (is_array($v)) {
+      if (array_keys($v) === range(0, count($v) - 1)) {
+        foreach($v as $mv) {
+          $res .= str_repeat("\t", $tabs)."\"".\addcslashes($k, "\"")."\"\t\t\"".\addcslashes($mv, "\"")."\"\n";
+        }
+      } else {
+        $res .= str_repeat("\t", $tabs)."\"".\addcslashes($k, "\"")."\"\n".
+        str_repeat("\t", $tabs)."{\n".
+        build_encode($v, $tabs+1).
+        str_repeat("\t", $tabs)."}\n";
+      }
+    } else {
+      $res .= str_repeat("\t", $tabs)."\"".\addcslashes($k, "\"")."\"\t\t\"".\addcslashes($v, "\"")."\"\n";
+    }
+  }
+
+  return $res;
+}
