@@ -1,8 +1,8 @@
 <?php 
 
-namespace leamare\Dota2BuildFile;
+namespace leamare\SimpleValveKeyValue;
 
-function build_decode($string) {
+function kv_decode(string $string): array {
   $len = strlen($string);
 
   $esc = false;
@@ -87,7 +87,7 @@ function build_decode($string) {
   return $res;
 }
 
-function build_encode($arr, $tabs = 0) {
+function kv_encode(array $arr, int $tabs = 0): string {
   if (!\is_array($arr)) return $arr;
   $res = "";
 
