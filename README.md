@@ -1,4 +1,4 @@
-# Simple Valve KeyValue transformer
+# Simple KeyValue transformer
 
 ## What is this?
 
@@ -12,7 +12,7 @@ This library was initially made to transform Dota 2 .build files (using the same
 
 Functions use names similar to PHP default functions for JSON
 
-* `kv_decode(string $string)`: (array) gets valid KeyValue string and transforms it into PHP accosiative array
+* `kv_decode(string $string, int $flags = 0)`: (array) gets valid KeyValue string and transforms it into PHP accosiative array
 * `kv_encode(array $arr, int $tabs = 0)`: (string) transforms associative array into valid Valve KeyValue string
 
 ## Notes
@@ -21,13 +21,11 @@ Functions use names similar to PHP default functions for JSON
 * This also works backwards: if you have a regular array and convert it to KV, it will be a set of values with the same name
 * If there are multiple brackets in a row without a name, the last used name will be used for all of them (it's not a valid KV tho)
 
-## TODO:
+## What's not working and won't (probably) be implemented (for now)
 
-- [ ] Comments support
-  - comments types: "//...", "/..." and "/* */" (the last one isn't intended to be supported)
-  - kv_decode flag to ignore comments or save them separately
-- [ ] Value type detection
-- [ ] Support for non-quoted tokens
-- [ ] Conditional statements support
-- [ ] Size limitation for KeyValues support (max token length is 1021)
-- [ ] fix arrays of brackets
+* **Value types** - they don't matter as much in PHP, initially values are preserved as strings after decoding, it's intentional
+* **Preprocessor statements** (#include, #define, etc) - they will be preserved as regular values
+
+## KV Decode flags
+
+* `KV_PRESERVE_COMMENTS` - saves comments as "#/comment_nnn" statement (kv_encode saves such statements as comments)

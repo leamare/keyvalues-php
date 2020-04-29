@@ -1,3 +1,6 @@
 res.json
 tmp.json
 tmp.build
+res.kv
+test.php
+res*.kv

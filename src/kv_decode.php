@@ -1,21 +1,53 @@
 <?php 
 
-namespace leamare\SimpleValveKeyValue;
+namespace leamare\SimpleKV;
 
-function kv_decode(string $string): array {
+const KV_PRESERVE_COMMENTS = 1;
+
+function kv_decode(string $string, int $flags = 0): array {
   $len = strlen($string);
 
   $esc = false;
   $inside = false; 
   $header = false;
   $simple_value = true;
+
+  $comment = false;
+  $blockcomment = false;
+
+  $preserve_comments = (bool)($flags & KV_PRESERVE_COMMENTS);
+
   $res = [];
   $substr = ""; $name = ""; $prev_name = "";
+  $comm = "";
   $inner_brackets = 0;
 
   for ($i = 0; $i < $len; $i++) {
     $ch = $string[ $i ];
-    if ($esc) {
+    if ($comment) {
+      if ($ch === "\n") {
+        $comment = false;
+        if ($preserve_comments) {
+          $res['#/comment_'.$i] = $comm;
+          $comm = "";
+        }
+      } else {
+        if ($preserve_comments)
+          $comm .= $ch;
+      }
+    } else if ($blockcomment) {
+      if ($ch === "*" && $i < $len-1 && $string[$i+1] === '/') {
+        $blockcomment = false;
+        $i++;
+        if ($preserve_comments) {
+          $res['#/comment_'.$i] = $comm;
+          $comm = "";
+        }
+      } else {
+        if ($preserve_comments)
+          $comm .= $ch;
+      }
+    } else if ($esc) {
       if ($inside)
         $substr .= $ch;
       else if ($header)
@@ -42,7 +74,7 @@ function kv_decode(string $string): array {
           }
           if (!$inner_brackets) {
             // getting deeper
-            $v = $simple_value ? $substr : build_decode($substr);
+            $v = $simple_value ? $substr : kv_decode($substr, $flags);
             if (empty($name)) $name = $prev_name;
             if (isset($res[ $name ])) {
               if (!\is_array($res[ $name ]))
@@ -77,34 +109,14 @@ function kv_decode(string $string): array {
       } else if ($ch === "{") {
         $inside = true;
         $simple_value = false;
+      } else if (!$header && $ch === "/" && $i && $string[ $i-1 ] === "/") {
+        $comment = true;
+      } else if (!$header && $ch === "*" && $i && $string[ $i-1 ] === "/") {
+        $blockcomment = true;
       } else {
         if ($header)
           $name .= $ch;
       }
-    }
-  }
-
-  return $res;
-}
-
-function kv_encode(array $arr, int $tabs = 0): string {
-  if (!\is_array($arr)) return $arr;
-  $res = "";
-
-  foreach ($arr as $k => $v) {
-    if (is_array($v)) {
-      if (array_keys($v) === range(0, count($v) - 1)) {
-        foreach($v as $mv) {
-          $res .= str_repeat("\t", $tabs)."\"".\addcslashes($k, "\"")."\"\t\t\"".\addcslashes($mv, "\"")."\"\n";
-        }
-      } else {
-        $res .= str_repeat("\t", $tabs)."\"".\addcslashes($k, "\"")."\"\n".
-        str_repeat("\t", $tabs)."{\n".
-        build_encode($v, $tabs+1).
-        str_repeat("\t", $tabs)."}\n";
-      }
-    } else {
-      $res .= str_repeat("\t", $tabs)."\"".\addcslashes($k, "\"")."\"\t\t\"".\addcslashes($v, "\"")."\"\n";
     }
   }
 
