@@ -23,6 +23,9 @@ function kv_encode(array $arr, int $tabs = 0): string {
 
       if (array_keys($v) === range(0, count($v) - 1)) {
         foreach($v as $mv) {
+          if (is_array($mv)) {
+            $mv = kv_encode($v, $tabs+1);
+          }
           $res .= str_repeat("\t", $tabs)."$k\t\t\"".\addcslashes((string)$mv, "\"")."\"\n";
         }
       } else {

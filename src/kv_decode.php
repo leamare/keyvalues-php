@@ -56,6 +56,8 @@ function kv_decode(string $string, int $flags = 0): array {
     } else {
       if ($ch === "\\") {
         $esc = true;
+        if ($inside)
+          $substr .= $ch;
       } else if ($inside) {
         if ($ch === "{") {
           $inner_brackets++;
@@ -73,8 +75,14 @@ function kv_decode(string $string, int $flags = 0): array {
             }
           }
           if (!$inner_brackets) {
-            // getting deeper
-            $v = $simple_value ? $substr : kv_decode($substr, $flags);
+            if ($simple_value) {
+              // removing slashes
+              $v = str_replace("\\\"", "\"", $substr);
+            } else {
+              // getting deeper
+              $v = kv_decode($substr, $flags);
+            }
+            
             if (empty($name)) $name = $prev_name;
             if (isset($res[ $name ])) {
               if (!\is_array($res[ $name ]))
