@@ -59,10 +59,10 @@ function kv_decode(string $string, int $flags = 0): array {
         if ($inside)
           $substr .= $ch;
       } else if ($inside) {
-        if ($ch === "{") {
+        if ($ch === "{" && !$simple_value) {
           $inner_brackets++;
           $substr .= $ch;
-        } else if ($ch === "\"" || $ch === "}") {
+        } else if ($ch === "\"" || ($ch === "}" && !$simple_value)) {
           if ($simple_value) {
             if ($ch !== "\"") {
               $substr .= $ch;
