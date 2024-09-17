@@ -1,5 +1,7 @@
 # Simple KeyValue transformer
 
+Simple Valve KeyValue/VData file formats parser library for PHP. Works with Dota 2 and Deadlock files.
+
 ## What is this?
 
 Valve is using JSON-like format KeyValues to store some kind of data (e.g. resources list, scripts, materials, dota 2 build files, etc...)
@@ -29,3 +31,9 @@ Functions use names similar to PHP default functions for JSON
 ## KV Decode flags
 
 * `KV_PRESERVE_COMMENTS` - saves comments as "#/comment_nnn" statement (kv_encode saves such statements as comments)
+* `KV_VDATA_FORMAT` - parse VDATA input (compatible with regular KV), works with Deadlock data
+* `KV_PARSE_TYPES` - parse data types where possible
+
+## KV Encode flags
+
+* `KV_VDATA_OUTPUT` - output VDATA
