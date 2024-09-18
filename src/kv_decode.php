@@ -10,7 +10,8 @@ function is_space(string $ch): bool {
   return $ch == ' ' || $ch == "\n" || $ch == "\r" || $ch == "\t";
 }
 
-function type_value(string|array $el) {
+// Type: string|array 
+function type_value($el) {
   if (!is_string($el)) return $el;
 
   if ($el === "true") {
