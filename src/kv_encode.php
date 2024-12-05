@@ -47,6 +47,10 @@ function kv_encode(array $arr, int $flags = 0, int $tabs = 0): string {
   $nonComments = 0;
   $commCnt = 0 + $tabs;
   
+  if ($vdata && !$tabs) {
+    $tabs++;
+  }
+
   foreach ($arr as $k => $v) {
     if (strpos($k, '#/comment_') !== false) {
       if (\is_array($v))
@@ -57,7 +61,7 @@ function kv_encode(array $arr, int $flags = 0, int $tabs = 0): string {
         if ($vdata && !$commCnt) {
           $res .= "<!-- $v -->\n";
         } else {
-          $res .= "//".$v."\n";
+          $res .= str_repeat("\t", $tabs)."//".$v."\n";
         }
       }
     } else if (is_array($v)) {
@@ -68,20 +72,33 @@ function kv_encode(array $arr, int $flags = 0, int $tabs = 0): string {
 
       if (array_keys($v) === range(0, count($v) - 1)) {
         if ($vdata) {
-          $res .= str_repeat("\t", $tabs).($k == $nonComments && $tabs < 3 ? "" : header($k, $vdata)." = \n").
-              str_repeat("\t", $tabs)."[\n";
+          $res .= str_repeat("\t", $tabs).($k == $nonComments && $tabs < 3 ? "" : header($k, $vdata)." = \n");
+
+          if (count($v) == 2 && is_string($v[0]) && $v[0][strlen($v[0])-1] === ':') {
+            $tabs--;
+          } else {
+            $res .= str_repeat("\t", $tabs)."[\n";
+          }
+
           foreach($v as $mv) {
             if (is_array($mv)) {
               $mv = kv_encode($mv, $flags, $tabs+2);
               $res .= str_repeat("\t", $tabs+1)."{\n".
                 $mv.
                 str_repeat("\t", $tabs+1)."},\n";
+            } else if (is_string($mv) && $mv[strlen($mv)-1] === ':') {
+              $res .= str_repeat("\t", $tabs+1).$mv."\n";
             } else {
               $mv = to_string($mv, $vdata);
               $res .= str_repeat("\t", $tabs+1).$mv.",\n";
             }
           }
-          $res .= str_repeat("\t", $tabs)."]\n";
+
+          if (count($v) == 2 && is_string($v[0]) && $v[0][strlen($v[0])-1] === ':') {
+            $tabs++;
+          } else {
+            $res .= str_repeat("\t", $tabs)."]\n";
+          }
         } else {
           foreach($v as $mv) {
             if (is_array($mv)) {
@@ -112,6 +129,10 @@ function kv_encode(array $arr, int $flags = 0, int $tabs = 0): string {
 
       $nonComments++;
     }
+  }
+
+  if ($vdata && $tabs == 1) {
+    $res = "{\n".$res."}";
   }
 
   return $res;
