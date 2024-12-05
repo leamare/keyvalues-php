@@ -42,6 +42,7 @@ function kv_decode(string $string, int $flags = 2): array {
 
   $comment = false;
   $blockcomment = false;
+  $resource = false;
 
   $quotes = false;
   $array_depth = 0;
@@ -97,6 +98,10 @@ function kv_decode(string $string, int $flags = 2): array {
       $esc = false;
     } else {
       if ($array_depth && $ch == ',') {
+        if ($inside) {
+          $substr .= $ch;
+          continue;
+        }
         if ($substr === "" && !empty($name)) {
           $res[ end($array_keys) ][] = $parse_types ? type_value($name) : $name;
           $header = false;
@@ -130,7 +135,9 @@ function kv_decode(string $string, int $flags = 2): array {
           if (!$inner_brackets) {
             if ($simple_value) {
               // removing slashes
-              if ($quotes) {
+              if ($resource) {
+                $v = $substr.$ch;
+              } else if ($quotes) {
                 $v = str_replace("\\\"", "\"", $substr);
               } else {
                 $v = $substr;
@@ -149,6 +156,8 @@ function kv_decode(string $string, int $flags = 2): array {
             if ($name === "") {
               if (empty($res)) {
                 $res = $parse_types ? type_value($v) : $v;
+              } else if ($array_depth) {
+                $res[ $name ][] = $parse_types ? type_value($v) : $v;
               } else {
                 $res[] = $parse_types ? type_value($v) : $v;
               }
@@ -172,6 +181,7 @@ function kv_decode(string $string, int $flags = 2): array {
             $substr = "";
             $inside = false;
             $quotes = false;
+            $resource = false;
             if ($vdata) {
               $simple_value = false;
             } else {
@@ -185,6 +195,14 @@ function kv_decode(string $string, int $flags = 2): array {
           $substr .= $ch;
         }
       } else if ($ch === "\"") {
+        if ($i && $string[$i-1] === ":") {
+          $substr .= $ch;
+          $simple_value = true;
+          $quotes = true;
+          $inside = true;
+          $resource = true;
+          continue;
+        }
         if ($header) {
           //echo "$name\n";
           $header = false;
@@ -198,6 +216,10 @@ function kv_decode(string $string, int $flags = 2): array {
           $quotes = true;
         }
       } else if ($ch === "{") {
+        if (!$simple_value && !$quotes && $vdata && $array_depth && $substr !== "") {
+          $res[ end($array_keys) ][] = $parse_types ? type_value($substr) : $substr;
+          $substr = "";
+        }
         $inside = true;
         $simple_value = false;
       } else if (!$header && $ch === '/' && $i && $string[ $i-1 ] === '/') {
@@ -251,6 +273,10 @@ function kv_decode(string $string, int $flags = 2): array {
         }
       }
     }
+  }
+
+  if (count($res) == 1 && array_keys($res)[0] === "") {
+    $res = [ array_values($res)[0] ];
   }
 
   return $res;
