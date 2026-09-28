@@ -234,6 +234,10 @@ function kv_decode(string $string, int $flags = 2): array {
         $array_keys[] = $name;
         $res[$name] = [];
       } else if (!$header && $array_depth && $ch === ']') {
+        if ($substr !== "") {
+          $res[ end($array_keys) ][] = $parse_types ? type_value($substr) : $substr;
+          $substr = "";
+        }
         $array_depth--;
         array_pop($array_keys);
         $name = "";
